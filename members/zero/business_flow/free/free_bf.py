@@ -50,11 +50,14 @@ class FreeBusinessFlowManager(BusinessFlow):
             md5_password = md5(new_pass.encode()).hexdigest().upper()
             data["pass_salt"], data["pass_hash"] = service.create_salt_and_hash(md5_password)
             data["DC_CREATE_TIME"] = datetime.datetime.now().strftime("%Y/%m/%d %H:%M:%S.%f")
+            data["last_update_date"] = datetime.datetime.now().strftime("%Y/%m/%d %H:%M:%S.%f")
             data = check_full_schema(data, service.members_schema)
             data = preprocess(data, schema=service.members_schema)
             query = get_insert_check_query(data, service.members_schema)
 
             if len(list(self.mongo.find(query=query, index_name=self.index_name))) != 0:
+                raise DuplicatedMember()
+            if len(list(self.mongo.find(query={"_id":data['phone']}, index_name=self.index_name))) != 0:
                 raise DuplicatedMember()
 
             insert_id = self.mongo.insert({**data, "_id": data["phone"]}, self.index_name, 'insert_one')

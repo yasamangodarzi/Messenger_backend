@@ -1,5 +1,6 @@
 members_schema = {
     "first_name": {"_type": str, "_null_value": "null", "_check_in_insert": False},
+    "broker_type": {"_type": str, "_null_value": "null", "_check_in_insert": False},
     "last_name": {"_type": str, "_null_value": "null", "_check_in_insert": False},
     "id": {"_type": str, "_null_value": "null", "_check_in_insert": False},
     "category": {"_type": str, "_null_value": "MEMBER", "_check_in_insert": False},

@@ -87,3 +87,22 @@ class IncorrectLoginData(UserInputError):
         error_code_base = int(cfg_helper.get_config("CUSTOM_ERROR_CODES")["members"])
         super(IncorrectLoginData, self).__init__(message=msg, error_code=error_code_base + 101,
                                                  persian_massage='نام کاربری یا رمز عبور اشتباه است.')
+
+
+class DuplicatedRegister(UserInputError):
+    def __init__(self):
+        cfg_helper = ConfigHelper()
+        error_code_base = int(cfg_helper.get_config("CUSTOM_ERROR_CODES")["members"])
+        super(DuplicatedRegister, self).__init__(message="Member is already register ",
+                                                 error_code=error_code_base + 102,
+                                                 persian_massage="شما قبلا ثبت نام کردید. لطفا لاگین کنید.")
+
+
+class InvalidCurrentPassword(UserInputError):
+    def __init__(self):
+        cfg_helper = ConfigHelper()
+        error_code_base = int(cfg_helper.get_config("CUSTOM_ERROR_CODES")["members"])
+        super(InvalidCurrentPassword, self).__init__(message="Current password is invalid",
+                                                     error_code=error_code_base + 103,
+                                                     persian_massage="پسورد فعلی اشتباه وارد شده است."
+                                                     )

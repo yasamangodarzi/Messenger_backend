@@ -128,10 +128,10 @@ def user_login():
 
 
 # User
-user_auth_blueprint = Blueprint('user', __name__, url_prefix='/api/user')
+user_auth_blueprint = Blueprint('user', __name__, url_prefix='/StudentScientificSociety/api/user')
 
 
-@user_auth_blueprint.route('/<int:user_id>', methods=['GET'])
+@user_auth_blueprint.route('/<string:user_id>', methods=['GET'])
 def user_info(user_id):
     cfg_helper = ConfigHelper()
     method_type = 'select_user_info'
@@ -173,7 +173,7 @@ def user_info(user_id):
             return jsonify({"status": response['error_code'], "method_type": method_type,
                             "response": response, 'error_description': response['error_description']})
         else:
-            return jsonify({"status": 200,  "method_type": method_type, "response": response})
+            return jsonify({"status": 200, "method_type": method_type, "response": response})
     except NotAuthenticatedException as e:
         return jsonify({"status": 401, "method_type": method_type, "error": str(e)})
     except NotAuthorizedException as e:
@@ -191,7 +191,7 @@ def user_info(user_id):
         return jsonify({"status": 500, "method_type": None, "error": "General Error"})
 
 
-@user_auth_blueprint.route('/<int:user_id>', methods=['PATCH'])
+@user_auth_blueprint.route('/<string:user_id>', methods=['PATCH'])
 def change_user_info(user_id):
     cfg_helper = ConfigHelper()
     method_type = 'update_user_info'
@@ -208,7 +208,6 @@ def change_user_info(user_id):
         config_key = index.upper()
         if config_key not in cfg_helper.config.keys():
             raise RequiredFieldError("service")
-        order_data['data']['method'] = method_type
         dynamic_module = importlib.import_module(config_key.lower())
 
         class_ = config_key.split("_")
@@ -216,7 +215,7 @@ def change_user_info(user_id):
         for j in class_:
             class_name += (j[0].upper() + j[1:].lower())
         source = authenticate(api_key)
-        order_data["data"]['user_id'] = user_id
+        order_data["data"]['_id'] = user_id
         if source is None:
             raise NotAuthenticatedException()
 
@@ -251,14 +250,182 @@ def change_user_info(user_id):
         return jsonify({"status": 500, "method_type": None, "error": "General Error"})
 
 
-@user_auth_blueprint.route('/<int:user_id>', methods=['DELETE'])
+@user_auth_blueprint.route('/<string:user_id>', methods=['PUT'])
+def change_password(user_id):
+    cfg_helper = ConfigHelper()
+    method_type = 'change_password'
+    try:
+        order_data = request_flask.json
+        if 'service' not in order_data.keys():
+            raise RequiredFieldError("service")
+        index = order_data['service']
+        api_key = order_data['api_key']
+        if 'token' not in order_data.keys():
+            raise RequiredFieldError("token")
+        token = order_data['token']
+        payload = authorize(api_key, token)
+        config_key = index.upper()
+        if config_key not in cfg_helper.config.keys():
+            raise RequiredFieldError("service")
+        dynamic_module = importlib.import_module(config_key.lower())
+
+        class_ = config_key.split("_")
+        class_name = ''
+        for j in class_:
+            class_name += (j[0].upper() + j[1:].lower())
+        source = authenticate(api_key)
+        order_data["data"]['_id'] = user_id
+        if source is None:
+            raise NotAuthenticatedException()
+
+        size = 1000 if "size" not in order_data else order_data["size"]
+        from_ = 0 if "from" not in order_data else order_data["from"]
+        request_ = {"broker_type": cfg_helper.get_config("DEFAULT")["broker_type"], "source": source,
+                    "method": method_type, "ip": request_flask.remote_addr, "api_key": api_key, "size": size,
+                    "from": from_, "member_id": payload['member_id'], "data": order_data["data"]
+                    }
+
+        worker = getattr(dynamic_module, "MembersUpdateWorker")
+        response = clear_response(worker().serve_request(request_))
+        if not response['is_successful']:
+            return jsonify({"status": response['error_code'], "method_type": method_type,
+                            "response": response, 'error_description': response['error_description']})
+        else:
+            return jsonify({"status": 200, "method_type": method_type, "response": response})
+    except NotAuthenticatedException as e:
+        return jsonify({"status": 401, "method_type": method_type, "error": str(e)})
+    except NotAuthorizedException as e:
+        return jsonify({"status": 405, "method_type": method_type, "error": str(e)})
+    except PermissionDeniedException as e:
+        return jsonify({"status": 403, "method_type": method_type, "error": str(e)})
+    except RequiredFieldError as e:
+        return jsonify({"status": e.error_code, "method_type": method_type, "error": str(e)})
+    except InvalidInputException as e:
+        return jsonify({"status": 401, "method_type": method_type, "error": str(e)})
+    except KeyError as e:
+        return jsonify({"status": 401, "method_type": method_type,
+                        "error": "key %s is not passed" % str(e)})
+    except:
+        return jsonify({"status": 500, "method_type": None, "error": "General Error"})
+
+
+@user_auth_blueprint.route('/<string:user_id>', methods=['DELETE'])
 def delete_user(user_id):
-    return None
+    cfg_helper = ConfigHelper()
+    method_type = 'delete_user'
+    try:
+        order_data = request_flask.json
+        if 'service' not in order_data.keys():
+            raise RequiredFieldError("service")
+        index = order_data['service']
+        api_key = order_data['api_key']
+        if 'token' not in order_data.keys():
+            raise RequiredFieldError("token")
+        token = order_data['token']
+        payload = authorize(api_key, token)
+        config_key = index.upper()
+        if config_key not in cfg_helper.config.keys():
+            raise RequiredFieldError("service")
+        dynamic_module = importlib.import_module(config_key.lower())
+
+        class_ = config_key.split("_")
+        class_name = ''
+        for j in class_:
+            class_name += (j[0].upper() + j[1:].lower())
+        source = authenticate(api_key)
+        order_data["data"]['_id'] = user_id
+        if source is None:
+            raise NotAuthenticatedException()
+
+        size = 1000 if "size" not in order_data else order_data["size"]
+        from_ = 0 if "from" not in order_data else order_data["from"]
+        request_ = {"broker_type": cfg_helper.get_config("DEFAULT")["broker_type"], "source": source,
+                    "method": method_type, "ip": request_flask.remote_addr, "api_key": api_key, "size": size,
+                    "from": from_, "member_id": payload['member_id'], "data": order_data["data"]
+                    }
+
+        worker = getattr(dynamic_module, "MembersDeleteWorker")
+        response = clear_response(worker().serve_request(request_))
+        if not response['is_successful']:
+            return jsonify({"status": response['error_code'], "method_type": method_type,
+                            "response": response, 'error_description': response['error_description']})
+        else:
+            return jsonify({"status": 200, "method_type": method_type, "response": response})
+    except NotAuthenticatedException as e:
+        return jsonify({"status": 401, "method_type": method_type, "error": str(e)})
+    except NotAuthorizedException as e:
+        return jsonify({"status": 405, "method_type": method_type, "error": str(e)})
+    except PermissionDeniedException as e:
+        return jsonify({"status": 403, "method_type": method_type, "error": str(e)})
+    except RequiredFieldError as e:
+        return jsonify({"status": e.error_code, "method_type": method_type, "error": str(e)})
+    except InvalidInputException as e:
+        return jsonify({"status": 401, "method_type": method_type, "error": str(e)})
+    except KeyError as e:
+        return jsonify({"status": 401, "method_type": method_type,
+                        "error": "key %s is not passed" % str(e)})
+    except:
+        return jsonify({"status": 500, "method_type": None, "error": "General Error"})
 
 
-# @user_auth_blueprint.route('?keyword=<str:key>', methods=['GET'])
-# def search(key):
-#     return None
+@user_auth_blueprint.route('?keyword=<string:key>', methods=['GET'])
+def search(key):
+    cfg_helper = ConfigHelper()
+    method_type = 'select_user_by_username'
+    try:
+        order_data = request_flask.json
+        if 'service' not in order_data.keys():
+            raise RequiredFieldError("service")
+        index = order_data['service']
+        api_key = order_data['api_key']
+        if 'token' not in order_data.keys():
+            raise RequiredFieldError("token")
+        token = order_data['token']
+        payload = authorize(api_key, token)
+        config_key = index.upper()
+        if config_key not in cfg_helper.config.keys():
+            raise RequiredFieldError("service")
+        order_data['data']['method'] = method_type
+        dynamic_module = importlib.import_module(config_key.lower())
+
+        class_ = config_key.split("_")
+        class_name = ''
+        for j in class_:
+            class_name += (j[0].upper() + j[1:].lower())
+        source = authenticate(api_key)
+        order_data["data"]['user_name'] = key
+        if source is None:
+            raise NotAuthenticatedException()
+
+        size = 1000 if "size" not in order_data else order_data["size"]
+        from_ = 0 if "from" not in order_data else order_data["from"]
+        request_ = {"broker_type": cfg_helper.get_config("DEFAULT")["broker_type"], "source": source,
+                    "method": method_type, "ip": request_flask.remote_addr, "api_key": api_key, "size": size,
+                    "from": from_, "member_id": payload['member_id'], "data": order_data["data"]
+                    }
+
+        worker = getattr(dynamic_module, "MembersSelectWorker")
+        response = clear_response(worker().serve_request(request_))
+        if not response['is_successful']:
+            return jsonify({"status": response['error_code'], "method_type": method_type,
+                            "response": response, 'error_description': response['error_description']})
+        else:
+            return jsonify({"status": 200, "method_type": method_type, "response": response})
+    except NotAuthenticatedException as e:
+        return jsonify({"status": 401, "method_type": method_type, "error": str(e)})
+    except NotAuthorizedException as e:
+        return jsonify({"status": 405, "method_type": method_type, "error": str(e)})
+    except PermissionDeniedException as e:
+        return jsonify({"status": 403, "method_type": method_type, "error": str(e)})
+    except RequiredFieldError as e:
+        return jsonify({"status": e.error_code, "method_type": method_type, "error": str(e)})
+    except InvalidInputException as e:
+        return jsonify({"status": 401, "method_type": method_type, "error": str(e)})
+    except KeyError as e:
+        return jsonify({"status": 401, "method_type": method_type,
+                        "error": "key %s is not passed" % str(e)})
+    except:
+        return jsonify({"status": 500, "method_type": None, "error": "General Error"})
 
 
 # @user_auth_blueprint.route('/<int:user_id>/contacts', methods=['GET'])
@@ -392,5 +559,4 @@ if __name__ == '__main__':
     # app.register_blueprint(chats_blueprint)
     app.register_blueprint(user_auth_blueprint)
     app.register_blueprint(user_blueprint)
-    app.run(debug=True, host='0.0.0.0', port=5004)
-
+    app.run(debug=True, host='0.0.0.0', port=9200)
