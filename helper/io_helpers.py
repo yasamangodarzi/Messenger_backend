@@ -1,21 +1,19 @@
 from helper.communication_helpers import create_message, create_persian_error_message
 
 
-def create_error_response(status, tracking_code, method_type, error, broker_type, source, member_id):
-    return create_message(method=method_type, record={}, broker_type=broker_type, source=source,
-                          tracking_code=tracking_code, error_code=status,
+def create_error_response(status, method_type, error, broker_type, source, member_id):
+    return create_message(method=method_type, record={}, broker_type=broker_type, source=source, error_code=status,
                           is_successful=False, error_description=error, member_id=member_id)
 
 
-def create_success_response(tracking_code, method_type, response, broker_type, source, member_id):
-    return create_message(method=method_type, record=response, broker_type=broker_type, source=source,
-                          tracking_code=tracking_code, error_code=0,
+def create_success_response(method_type, response, broker_type, source, member_id):
+    return create_message(method=method_type, record=response, broker_type=broker_type, source=source, error_code=0,
                           is_successful=True, error_description="", member_id=member_id)
 
 
-def create_exception_response(status, tracking_code, method_type, error, broker_type, source, member_id, error_persian):
+def create_exception_response(status, method_type, error, broker_type, source, member_id, error_persian):
     return create_persian_error_message(method=method_type, record={}, broker_type=broker_type, source=source,
-                                        tracking_code=tracking_code, error_code=status,
+                                        error_code=status,
                                         is_successful=False, error_description=error, member_id=member_id,
                                         error_persian_description=error_persian)
 
@@ -87,7 +85,7 @@ class UserInputError(Exception):
 
 class MemberNotFoundError(UserInputError):
     def __init__(self):
-        super(MemberNotFoundError, self).__init__("INVALID member_id", 605, "کدکاربر اشتباه است")
+        super(MemberNotFoundError, self).__init__("INVALID member_id", 605, "کد کاربر اشتباه است")
 
 
 class RequiredFieldError(UserInputError):
