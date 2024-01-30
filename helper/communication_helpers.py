@@ -1,11 +1,11 @@
 
 
-def create_message(method, record, tracking_code, broker_type, source, is_successful, member_id, size=1000, from_=0,
+def create_message(method, record,  broker_type, source, is_successful, member_id, size=1000, from_=0,
                    error_description=None, error_code=0, sort_by=None):
     if sort_by is None:
         sort_by = [{"DC_CREATE_TIME": "desc"}]
 
-    message = {"method": method, "tracking_code": tracking_code, "broker_type": broker_type,
+    message = {"method": method,   "broker_type": broker_type,
                "source": source, "size": size, "from": from_, "sort_by": sort_by,
                "is_successful": is_successful, "error_code": error_code,
                "error_description": error_description, "data": record, "member_id": member_id}
@@ -13,13 +13,13 @@ def create_message(method, record, tracking_code, broker_type, source, is_succes
     return message
 
 
-def create_persian_error_message(method, record, tracking_code, broker_type, source, is_successful, member_id,
+def create_persian_error_message(method, record, broker_type, source, is_successful, member_id,
                                  size=1000, from_=0,
                                  error_description=None, error_code=0, sort_by=None, error_persian_description=None, ):
     if sort_by is None:
         sort_by = [{"DC_CREATE_TIME": "desc"}]
 
-    message = {"method": method, "tracking_code": tracking_code, "broker_type": broker_type,
+    message = {"method": method,"broker_type": broker_type,
                "source": source, "size": size, "from": from_, "sort_by": sort_by,
                "is_successful": is_successful, "error_code": error_code,
                "error_description": error_description, "data": record, "member_id": member_id,
@@ -33,8 +33,7 @@ def clear_response(response):
         del response["broker_type"]
     if "source" in response.keys():
         del response["source"]
-    if "tracking_code" in response.keys():
-        del response["tracking_code"]
+
     if "method" in response.keys():
         del response["method"]
     if "sort_by" in response.keys():
