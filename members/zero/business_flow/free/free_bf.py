@@ -17,7 +17,7 @@ class FreeBusinessFlowManager(BusinessFlow):
         super(FreeBusinessFlowManager, self).__init__(service.service_name)
 
         self.cfg_helper = ConfigHelper()
-
+        self.index_image_file = self.cfg_helper.get_config(service.service_name)["index_image_file"]
         self.index = self.mongo.create_index(self.cfg_helper.get_config(service.service_name)["index_name"])
 
     def select_business_flow(self, data, request, member, params=None):
@@ -51,13 +51,22 @@ class FreeBusinessFlowManager(BusinessFlow):
             data["pass_salt"], data["pass_hash"] = service.create_salt_and_hash(md5_password)
             data["DC_CREATE_TIME"] = datetime.datetime.now().strftime("%Y/%m/%d %H:%M:%S.%f")
             data["last_update_date"] = datetime.datetime.now().strftime("%Y/%m/%d %H:%M:%S.%f")
+            if 'image' in list(data.keys()):
+                image_id = self.insert_file(self.index_image_file, data['image']['file_content'],
+                                            data['image']['file_type'],
+                                            member["_id"] + "@" + datetime.datetime.now().strftime(
+                                                "%Y%m%d_%H:%M:%S.%f"))
+                image_id = image_id.inserted_id
+            else:
+                image_id = None
+            data['image'] = image_id
             data = check_full_schema(data, service.members_schema)
             data = preprocess(data, schema=service.members_schema)
             query = get_insert_check_query(data, service.members_schema)
 
             if len(list(self.mongo.find(query=query, index_name=self.index_name))) != 0:
                 raise DuplicatedMember()
-            if len(list(self.mongo.find(query={"_id":data['phone']}, index_name=self.index_name))) != 0:
+            if len(list(self.mongo.find(query={"_id": data['phone']}, index_name=self.index_name))) != 0:
                 raise DuplicatedMember()
 
             insert_id = self.mongo.insert({**data, "_id": data["phone"]}, self.index_name, 'insert_one')

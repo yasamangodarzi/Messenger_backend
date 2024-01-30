@@ -13,7 +13,8 @@ class UserBusinessFlowManager(BusinessFlow):
     def __init__(self, ):
         super(UserBusinessFlowManager, self).__init__(service.service_name)
         self.cfg_helper = ConfigHelper()
-        # self.index = self.create_index(self.cfg_helper.get_config(service.service_name)["index_name"])
+
+        self.index_image_file = self.cfg_helper.get_config(service.service_name)["index_image_file"]
         # self.index_transactions = self.create_index(
         #     self.cfg_helper.get_config(service.service_name)["transactions_index_name"])
 
@@ -31,6 +32,16 @@ class UserBusinessFlowManager(BusinessFlow):
             search_result = list(self.mongo.find(query=query, index_name=self.index_name, limit=1))
             if len(search_result) == 0:
                 raise MemberNotFoundError()
+
+            if search_result[0]["image"] not in ['null', None, "None"]:
+                find_image = list(self.serve_file(self.index_image_file, search_result[0]["image"]))
+                if len(find_image) != 0:
+                    search_result[0]["image"] = {
+                        "file_content": find_image[0]['file_content'],
+                        "file_type": find_image[0]['type'],
+
+                    }
+
             del search_result[0]['pass_hash']
             del search_result[0]['pass_salt']
             del search_result[0]['category']
@@ -42,6 +53,14 @@ class UserBusinessFlowManager(BusinessFlow):
             query = {"user_name": user_name}
             search_result = list(self.mongo.find(query=query, index_name=self.index_name, limit=1))
             for item in range(len(search_result)):
+                if search_result[item]["image"] not in ['null', None, "None"]:
+                    find_image = list(self.serve_file(self.index_image_file, search_result[item]["image"]))
+                    if len(find_image) != 0:
+                        search_result[item]["image"] = {
+                            "file_content": find_image[0]['file_content'],
+                            "file_type": find_image[0]['type'],
+
+                        }
                 del search_result[item]['pass_hash']
                 del search_result[item]['pass_salt']
                 del search_result[item]['category']
@@ -121,6 +140,15 @@ class UserBusinessFlowManager(BusinessFlow):
             for k in data_keys:
                 if k in blocked_fields:
                     del data[k]
+            if 'image' in data_keys:
+                image_id = self.insert_file(self.index_image_file, data['image']['file_content'],
+                                            data['image']['file_type'],
+                                            member["_id"] + "@" + datetime.datetime.now().strftime(
+                                                "%Y%m%d_%H:%M:%S.%f"))
+                image_id = image_id.inserted_id
+            else:
+                image_id = None
+            data['image'] = image_id
             check_schema(data, service.members_schema)
             data = preprocess(data, schema=service.members_schema)
 
@@ -134,7 +162,7 @@ class UserBusinessFlowManager(BusinessFlow):
             return result
         elif request["method"] == "change_password":
             check_required_key(["_id", "old_password", "new_password"], data)
-            result = change_password(self,data, member)
+            result = change_password(self, data, member)
             return result
 
         # elif request["method"] == "change_password":
@@ -170,7 +198,7 @@ class UserBusinessFlowManager(BusinessFlow):
     # return result
 
 
-def change_password(self,data, member):
+def change_password(self, data, member):
     if data["_id"] != member['_id']:
         raise PermissionError()
 
@@ -182,7 +210,7 @@ def change_password(self,data, member):
             and not check_password(password=old_password, member=login_member):
         raise InvalidCurrentPassword()
 
-    update_result = set_new_password(self,new_password=data["new_password"], member_id=member["_id"])
+    update_result = set_new_password(self, new_password=data["new_password"], member_id=member["_id"])
 
     result = {"id": update_result["_id"], "result": update_result["result"]}
     return result

@@ -368,12 +368,13 @@ def delete_user(user_id):
         return jsonify({"status": 500, "method_type": None, "error": "General Error"})
 
 
-@user_auth_blueprint.route('?keyword=<string:key>', methods=['GET'])
-def search(key):
+@user_auth_blueprint.route('/', methods=['GET'])
+def search():
     cfg_helper = ConfigHelper()
     method_type = 'select_user_by_username'
     try:
         order_data = request_flask.json
+        order_data["data"]['user_name'] = request_flask.args.get('keyword')
         if 'service' not in order_data.keys():
             raise RequiredFieldError("service")
         index = order_data['service']
@@ -387,13 +388,11 @@ def search(key):
             raise RequiredFieldError("service")
         order_data['data']['method'] = method_type
         dynamic_module = importlib.import_module(config_key.lower())
-
         class_ = config_key.split("_")
         class_name = ''
         for j in class_:
             class_name += (j[0].upper() + j[1:].lower())
         source = authenticate(api_key)
-        order_data["data"]['user_name'] = key
         if source is None:
             raise NotAuthenticatedException()
 
