@@ -1,6 +1,5 @@
 from helper.business_flow_helpers import BusinessFlow
 from helper.config_helper import ConfigHelper
-from walrus import *
 import members as service
 from helper.io_helpers import *
 from members.zero.utils.utils import *
@@ -14,12 +13,6 @@ class UserBusinessFlowManager(BusinessFlow):
         # self.index = self.create_index(self.cfg_helper.get_config(service.service_name)["index_name"])
         # self.index_transactions = self.create_index(
         #     self.cfg_helper.get_config(service.service_name)["transactions_index_name"])
-
-        redis_host = self.cfg_helper.get_config("REDIS")["redis_host"]
-        redis_port = self.cfg_helper.get_config("REDIS")["redis_port"]
-        redis_db_number = self.cfg_helper.get_config("REDIS")["redis_db_number"]
-
-        self.db = Database(redis_host, redis_port, redis_db_number)
 
     def select_business_flow(self, data, request, member, params=None):
         self.mongo.get_mongo_connection()

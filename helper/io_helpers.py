@@ -85,7 +85,7 @@ class UserInputError(Exception):
 
 class MemberNotFoundError(UserInputError):
     def __init__(self):
-        super(MemberNotFoundError, self).__init__("INVALID member_id", 605, "کدکاربر اشتباه است")
+        super(MemberNotFoundError, self).__init__("INVALID member_id", 605, "کد کاربر اشتباه است")
 
 
 class RequiredFieldError(UserInputError):
@@ -104,10 +104,3 @@ class InvalidInputField(UserInputError):
     def __init__(self, field_name):
         super(InvalidInputField, self).__init__("Invalid value for field with name '%s'" % field_name, 603,
                                                 "مقدار نامعتبر برای فیلد با نام '%s'")
-
-
-class UserInputError(Exception):
-    def __init__(self, message, error_code, persian_massage=''):
-        super(UserInputError, self).__init__(message)
-        self.error_code = error_code
-        self.persian_massage = persian_massage

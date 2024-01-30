@@ -1,5 +1,6 @@
 import datetime
 import importlib
+import sys
 
 import jwt
 from flask import Flask, Blueprint, jsonify
@@ -11,7 +12,7 @@ from helper.io_helpers import RequiredFieldError
 
 app = Flask(__name__)
 
-user_blueprint = Blueprint('api', __name__, url_prefix='/api')
+user_blueprint = Blueprint('api', __name__, url_prefix='/StudentScientificSociety/api')
 
 
 @user_blueprint.route('/register', methods=['POST'])
@@ -391,4 +392,5 @@ if __name__ == '__main__':
     # app.register_blueprint(chats_blueprint)
     app.register_blueprint(user_auth_blueprint)
     app.register_blueprint(user_blueprint)
-    app.run(debug=True, port=9200)
+    app.run(debug=True, host='0.0.0.0', port=5004)
+

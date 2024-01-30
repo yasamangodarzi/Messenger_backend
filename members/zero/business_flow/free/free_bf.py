@@ -1,3 +1,4 @@
+import datetime
 import uuid
 from hashlib import md5
 import members as service
@@ -9,7 +10,6 @@ from helper.io_helpers import *
 
 from helper.io_helpers import check_full_schema, preprocess, RequiredFieldError, check_schema
 from members.zero.utils.utils import *
-from walrus import *
 
 
 class FreeBusinessFlowManager(BusinessFlow):
@@ -19,12 +19,6 @@ class FreeBusinessFlowManager(BusinessFlow):
         self.cfg_helper = ConfigHelper()
 
         self.index = self.mongo.create_index(self.cfg_helper.get_config(service.service_name)["index_name"])
-
-        redis_host = self.cfg_helper.get_config("REDIS")["redis_host"]
-        redis_port = self.cfg_helper.get_config("REDIS")["redis_port"]
-        redis_db_number = self.cfg_helper.get_config("REDIS")["redis_db_number"]
-
-        self.db = Database(redis_host, redis_port, redis_db_number)
 
     def select_business_flow(self, data, request, member, params=None):
         self.mongo.get_mongo_connection()
