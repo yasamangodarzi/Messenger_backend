@@ -11,6 +11,8 @@ members_schema = {
     "pass_hash": {"_type": str, "_null_value": "null", "_check_in_insert": False},
     "phone": {"_type": str, "_null_value": "null", "_check_in_insert": True},
     "email": {"_type": str, "_null_value": "null", "_check_in_insert": False},
+    "phone_access": {"_type": str, "_null_value": "TRUE", "_check_in_insert": False},
+    "photo_access": {"_type": str, "_null_value": "TRUE", "_check_in_insert": False},
     "verify_email": {"_type": str, "_null_value": "FALSE", "_check_in_insert": False},
     "status": {"_type": str, "_null_value": "null", "_check_in_insert": False},
 

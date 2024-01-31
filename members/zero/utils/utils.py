@@ -9,7 +9,7 @@ from members import cfg_helper
 import members as service
 
 
-def get_member(mongo, request_sender_id):
+def get_member(request_sender_id):
     query = {"_id": request_sender_id}
     mongo = MongoDB()
     mongo.get_mongo_connection()
