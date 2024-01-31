@@ -28,6 +28,8 @@ class UserBusinessFlowManager(BusinessFlow):
             query = {"user_id": user_id}
             search_result = list(self.mongo.find(query=query, index_name=self.index_name))
             for item in range(len(search_result)):
+                del search_result[item]['_id']
+                add = True
                 contact_info = get_member(search_result[item]['contact_id'])
                 contact_list_contact = get_contact(search_result[item]['contact_id'])
                 for contact_contact_list in contact_list_contact:
@@ -42,17 +44,18 @@ class UserBusinessFlowManager(BusinessFlow):
                                     }
                         if contact_contact_list['access_phone'] in ['TRUE', True, "True", "true"]:
                             search_result[item]["phone"] = contact_info["phone"]
-                    else:
-                        if contact_info['access_photo'] in ['TRUE', True, "True", "true"]:
-                            if contact_info["image"] not in ['null', None, "None"]:
-                                find_image = list(self.serve_file(self.index_image_file, contact_info["image"]))
-                                if len(find_image) != 0:
-                                    search_result[item]["image"] = {
-                                        "file_content": find_image[0]['file_content'],
-                                        "file_type": find_image[0]['type'],
-                                    }
-                        if contact_info['access_phone'] in ['TRUE', True, "True", "true"]:
-                            search_result[item]["phone"] = contact_info["phone"]
+                        add = False
+                if add:
+                    if contact_info['access_photo'] in ['TRUE', True, "True", "true"]:
+                        if contact_info["image"] not in ['null', None, "None"]:
+                            find_image = list(self.serve_file(self.index_image_file, contact_info["image"]))
+                            if len(find_image) != 0:
+                                search_result[item]["image"] = {
+                                    "file_content": find_image[0]['file_content'],
+                                    "file_type": find_image[0]['type'],
+                                }
+                    if contact_info['access_phone'] in ['TRUE', True, "True", "true"]:
+                        search_result[item]["phone"] = contact_info["phone"]
                     search_result[item]["first_name"] = contact_info["first_name"]
                     search_result[item]["last_name"] = contact_info["last_name"]
                     search_result[item]["bio"] = contact_info["bio"]
