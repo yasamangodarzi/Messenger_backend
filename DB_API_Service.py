@@ -526,7 +526,6 @@ def insert_contact(user_id):
         if source is None:
             raise NotAuthenticatedException()
 
-
         size = 1000 if "size" not in order_data else order_data["size"]
         from_ = 0 if "from" not in order_data else order_data["from"]
         request_ = {"broker_type": cfg_helper.get_config("DEFAULT")["broker_type"], "source": source,
@@ -709,15 +708,69 @@ def update_contact(contact_id):
 #     return None
 #
 #
-# # Groups
-# groups_blueprint = Blueprint('groups', __name__, url_prefix='/api/groups')
-#
-#
-# @groups_blueprint.route('', methods=['POST'])
-# def insert_group():
-#     return None
-#
-#
+# Groups
+groups_blueprint = Blueprint('groups', __name__, url_prefix='/StudentScientificSociety/api/groups')
+
+
+@groups_blueprint.route('/', methods=['POST'])
+def insert_group():
+    cfg_helper = ConfigHelper()
+    method_type = 'create_group'
+    try:
+        order_data = request_flask.json
+        if 'service' not in order_data.keys():
+            raise RequiredFieldError("service")
+        index = order_data['service']
+        api_key = order_data['api_key']
+        if 'token' not in order_data.keys():
+            raise RequiredFieldError("token")
+        token = order_data['token']
+        payload = authorize(api_key, token)
+        config_key = index.upper()
+        if config_key not in cfg_helper.config.keys():
+            raise RequiredFieldError("service")
+        order_data['data']['method'] = method_type
+        dynamic_module = importlib.import_module(config_key.lower())
+
+        class_ = config_key.split("_")
+        class_name = ''
+        for j in class_:
+            class_name += (j[0].upper() + j[1:].lower())
+        source = authenticate(api_key)
+        if source is None:
+            raise NotAuthenticatedException()
+
+        size = 1000 if "size" not in order_data else order_data["size"]
+        from_ = 0 if "from" not in order_data else order_data["from"]
+        request_ = {"broker_type": cfg_helper.get_config("DEFAULT")["broker_type"], "source": source,
+                    "method": method_type, "ip": request_flask.remote_addr, "api_key": api_key, "size": size,
+                    "from": from_, "member_id": payload['member_id'], "data": order_data["data"]
+                    }
+
+        worker = getattr(dynamic_module, "GroupInsertWorker")
+        response = clear_response(worker().serve_request(request_))
+        if not response['is_successful']:
+            return jsonify({"status": response['error_code'], "method_type": method_type,
+                            "response": response, 'error_description': response['error_description']})
+        else:
+            return jsonify({"status": 200, "method_type": method_type, "response": response})
+    except NotAuthenticatedException as e:
+        return jsonify({"status": 401, "method_type": method_type, "error": str(e)})
+    except NotAuthorizedException as e:
+        return jsonify({"status": 405, "method_type": method_type, "error": str(e)})
+    except PermissionDeniedException as e:
+        return jsonify({"status": 403, "method_type": method_type, "error": str(e)})
+    except RequiredFieldError as e:
+        return jsonify({"status": e.error_code, "method_type": method_type, "error": str(e)})
+    except InvalidInputException as e:
+        return jsonify({"status": 401, "method_type": method_type, "error": str(e)})
+    except KeyError as e:
+        return jsonify({"status": 401, "method_type": method_type,
+                        "error": "key %s is not passed" % str(e)})
+    except:
+        return jsonify({"status": 500, "method_type": None, "error": "General Error"})
+
+
 # @groups_blueprint.route('/<int:group_id>', methods=['DELETE'])
 # def delete_group(group_id):
 #     return None
@@ -793,7 +846,7 @@ def create_jwt_token(payload):
 
 
 if __name__ == '__main__':
-    # app.register_blueprint(chats_blueprint)
+    app.register_blueprint(groups_blueprint)
     app.register_blueprint(user_auth_blueprint)
     app.register_blueprint(user_blueprint)
     app.run(debug=True, host='0.0.0.0', port=5004)
