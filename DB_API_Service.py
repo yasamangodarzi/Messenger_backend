@@ -525,8 +525,7 @@ def insert_contact(user_id):
         order_data["data"]['contact_id'] = user_id
         if source is None:
             raise NotAuthenticatedException()
-        if payload['member_id'] != user_id:
-            raise NotAuthenticatedException()
+
 
         size = 1000 if "size" not in order_data else order_data["size"]
         from_ = 0 if "from" not in order_data else order_data["from"]
@@ -797,4 +796,4 @@ if __name__ == '__main__':
     # app.register_blueprint(chats_blueprint)
     app.register_blueprint(user_auth_blueprint)
     app.register_blueprint(user_blueprint)
-    app.run(debug=True, host='0.0.0.0', port=9200)
+    app.run(debug=True, host='0.0.0.0', port=5004)
