@@ -38,6 +38,7 @@ from helper.database_helper import MongoDB
 from helper.io_helpers import UserInputError, RequiredFieldError, MemberNotFoundError
 import contact as service
 
+
 def get_insert_check_query(data, schema):
     query = {}
     for key in data.keys():
@@ -59,11 +60,11 @@ def get_contact(request_sender_id):
     return search_result
 
 
-
 def check_required_key(required_keys, data):
     for required_key in required_keys:
         if required_key not in data.keys():
             raise RequiredFieldError(required_key)
+
 
 #
 # def check_password(password, member):
@@ -93,8 +94,9 @@ class IncorrectType(UserInputError):
         cfg_helper = ConfigHelper()
         error_code_base = int(cfg_helper.get_config("CUSTOM_ERROR_CODES")["group"])
         super(IncorrectType, self).__init__(message="wrong type",
-                                               error_code=error_code_base + 102,
-                                               persian_massage="مقدار فیلد type اشتباه است.")
+                                            error_code=error_code_base + 102,
+                                            persian_massage="مقدار فیلد type اشتباه است.")
+
 
 #
 # class IncorrectLoginData(UserInputError):
@@ -110,8 +112,17 @@ class DuplicatedGroup(UserInputError):
         cfg_helper = ConfigHelper()
         error_code_base = int(cfg_helper.get_config("CUSTOM_ERROR_CODES")["group"])
         super(DuplicatedGroup, self).__init__(message="Group is already register ",
-                                                 error_code=error_code_base + 102,
-                                                 persian_massage="همچین اسم گروهی موجود است")
+                                              error_code=error_code_base + 102,
+                                              persian_massage="همچین اسم گروهی موجود است")
+
+
+class DosenotExistGroup(UserInputError):
+    def __init__(self):
+        cfg_helper = ConfigHelper()
+        error_code_base = int(cfg_helper.get_config("CUSTOM_ERROR_CODES")["group"])
+        super(DosenotExistGroup, self).__init__(message="The group does not exist",
+                                                error_code=error_code_base + 103,
+                                                persian_massage="گروه وجود ندارد")
 #
 #
 # class InvalidCurrentPassword(UserInputError):

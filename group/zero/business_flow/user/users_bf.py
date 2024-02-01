@@ -23,7 +23,7 @@ class UserBusinessFlowManager(BusinessFlow):
             raise RequiredFieldError("method")
 
         method = request["method"]
-        if method == "select_content":
+        if method == "select_group":
             user_id = str(data['user_id'])
             query = {"user_id": user_id}
             search_result = list(self.mongo.find(query=query, index_name=self.index_name))
@@ -83,18 +83,26 @@ class UserBusinessFlowManager(BusinessFlow):
         # data = data['data']
         method = request["method"]
         if method == "create_group":
-            if 'type' not  in list(data.keys()):
+            if 'type' not in list(data.keys()):
                 raise RequiredFieldError("type")
             if data['type'] == 'pv':
-                if len(data['member_ids'] != 1) :
+                if len(data['member_ids']) != 1:
                     raise IncorrectType()
-                data['admin_ids'] = [request['member_id'] , data['member_ids']]
-                data['user_ids'] = [request['member_id'] , data['member_ids']]
+                user_id = request['member_id']
+                member_id = data['member_ids'][0]
+                data['admin_ids'] = [user_id, member_id]
+                data['user_ids'] = [user_id, member_id]
+                data['group_user_name'] = f'pv.{user_id}.{member_id}'
             elif data['type'] == 'group':
                 if 'group_name' not in list(data.keys()):
                     raise RequiredFieldError("group_name")
+                if 'group_user_name' not in list(data.keys()):
+                    raise RequiredFieldError("group_user_name")
                 data['admin_ids'] = [request['member_id']]
-                data['user_ids'] = [request['member_id'], data['member_ids']]
+                data['user_ids'] = [request['member_id']]
+                for member in data['member_ids']:
+                    data['user_ids'].append(member)
+            del data['member_ids']
 
             query = get_insert_check_query(data, service.group_schema)
             if len(list(self.mongo.find(query=query, index_name=self.index_name))) != 0:
@@ -102,6 +110,22 @@ class UserBusinessFlowManager(BusinessFlow):
             data["DC_CREATE_TIME"] = datetime.datetime.now().strftime("%Y/%m/%d %H:%M:%S.%f")
             data["last_update_date"] = datetime.datetime.now().strftime("%Y/%m/%d %H:%M:%S.%f")
             doc = check_full_schema(data, service.group_schema)
+            doc = preprocess(doc, service.group_schema)
+            insert_response = self.mongo.insert(index_name=self.index_name, document=doc, insert_type='insert_one')
+            result = {"id": str(insert_response.inserted_id), "result": "inserted"}
+        elif method == "add_new_member":
+            if 'group_user_name' not in list(data.keys()):
+                raise RequiredFieldError("group_user_name")
+            query = {"group_user_name": data['group_user_name']}
+            search_result = list(self.mongo.find(query=query, index_name=self.index_name))
+            if len(search_result) == 0:
+                raise DosenotExistGroup()
+            if search_result[0]['type'] == "pv":
+                raise PermissionError()
+            user_ids_list = search_result[0]['user_ids']
+            for member in data['member_ids']:
+                user_ids_list.append(member)
+            doc = check_full_schema({"user_ids": user_ids_list}, service.contact_schema)
             doc = preprocess(doc, service.group_schema)
             insert_response = self.mongo.insert(index_name=self.index_name, document=doc, insert_type='insert_one')
             result = {"id": str(insert_response.inserted_id), "result": "inserted"}
