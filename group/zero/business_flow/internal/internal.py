@@ -40,9 +40,9 @@ class FreeBusinessFlowManager(BusinessFlow):
             check_required_key(['password_confirm', 'password', "user_name", "phone"], data)
             data["phone"] = (data["phone"]).replace(" ", "")
             new_pass = data["password"]
-            new_pass_confirm = data["password_confirm"]
-            if new_pass != new_pass_confirm:
-                raise PermissionError()
+            # new_pass_confirm = data["password_confirm"]
+            # if new_pass != new_pass_confirm:
+            #     raise PermissionError()
 
             if len(new_pass) < 8:
                 raise InvalidPasswordStructure()

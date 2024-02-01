@@ -73,6 +73,18 @@ class UserBusinessFlowManager(BusinessFlow):
                 del search_result[item]['category']
 
             results = {"total": len(search_result), "result": list(search_result)}
+        elif method == "select_pv_info":
+            contact_id = str(data['contact_id'])
+            user_id = request['member_id']
+            query = {"group_user_name": f"pv.{user_id}.{contact_id}", "type": "pv"}
+            search_result = list(self.mongo.find(query=query, index_name=self.index_name, limit=1))
+            if len(search_result) == 0:
+                query = {"group_user_name": f"pv.{contact_id}.{user_id}", "type": "pv"}
+                search_result = list(self.mongo.find(query=query, index_name=self.index_name, limit=1))
+                if len(search_result) == 0:
+                    raise PermissionError()
+
+            results = {"total": len(search_result), "result": list(search_result)}
         else:
             raise PermissionError()
 

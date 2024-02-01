@@ -1,6 +1,6 @@
 group_schema = {
     "broker_type": {"_type": str, "_null_value": "null", "_check_in_insert": False},
-    "admin_ids": {"_type": str, "_null_value": "null", "_check_in_insert": False},
+    "admin_ids": {"_type": list, "_null_value": [], "_check_in_insert": False},
     "group_user_name": {"_type": str, "_null_value": "null", "_check_in_insert": True},
     "user_ids": {"_type": list, "_null_value": [], "_check_in_insert": False},
     "type": {"_type": str, "_null_value": "null", "_check_in_insert": False},
