@@ -107,22 +107,30 @@ class IncorrectType(UserInputError):
 #                                                  persian_massage='نام کاربری یا رمز عبور اشتباه است.')
 #
 #
-class DuplicatedGroup(UserInputError):
+class DuplicatedChat(UserInputError):
     def __init__(self):
         cfg_helper = ConfigHelper()
-        error_code_base = int(cfg_helper.get_config("CUSTOM_ERROR_CODES")["group"])
-        super(DuplicatedGroup, self).__init__(message="Group is already register ",
+        error_code_base = int(cfg_helper.get_config("CUSTOM_ERROR_CODES")["chat"])
+        super(DuplicatedChat, self).__init__(message="chat is already register ",
                                               error_code=error_code_base + 102,
-                                              persian_massage="همچین اسم گروهی موجود است")
+                                              persian_massage="همچین اسم چتی موجود است")
 
 
-class DosenotExistGroup(UserInputError):
+class DosenotExistChat(UserInputError):
     def __init__(self):
         cfg_helper = ConfigHelper()
-        error_code_base = int(cfg_helper.get_config("CUSTOM_ERROR_CODES")["group"])
-        super(DosenotExistGroup, self).__init__(message="The group does not exist",
+        error_code_base = int(cfg_helper.get_config("CUSTOM_ERROR_CODES")["chat"])
+        super(DosenotExistChat, self).__init__(message="The chat does not exist",
                                                 error_code=error_code_base + 103,
-                                                persian_massage="گروه وجود ندارد")
+                                                persian_massage="همچین  چتی ندارد")
+#
+class MessageDosnotExist(UserInputError):
+    def __init__(self):
+        cfg_helper = ConfigHelper()
+        error_code_base = int(cfg_helper.get_config("CUSTOM_ERROR_CODES")["chat"])
+        super(MessageDosnotExist, self).__init__(message="The Message does not exist",
+                                                error_code=error_code_base + 104,
+                                                persian_massage="همچین پیامی ندارد")
 #
 #
 # class InvalidCurrentPassword(UserInputError):

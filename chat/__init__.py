@@ -1,11 +1,11 @@
 from helper.config_helper import ConfigHelper
 
 cfg_helper = ConfigHelper()
-service_name = "GROUP"
+service_name = "CHAT"
 
-from group.zero.workers import *
-from group.zero.business_flow.admin.admins_bf import *
-from group.zero.business_flow.user.users_bf import *
-from group.zero.business_flow.internal.internal import *
-from group.zero.utils.utils import *
-from group.zero.utils.definitions import *
+from chat.zero.workers import *
+from chat.zero.business_flow.admin.admins_bf import *
+from chat.zero.business_flow.user.users_bf import *
+from chat.zero.business_flow.internal.internal import *
+from chat.zero.utils.utils import *
+from chat.zero.utils.definitions import *

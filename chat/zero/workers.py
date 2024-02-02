@@ -4,13 +4,13 @@ from helper.config_helper import ConfigHelper
 from helper.io_helpers import *
 from helper.multiplexer import Multiplexer
 
-import group as service
+import chat as service
 from members import get_member
 
 
-class GroupWorker:
+class ChatWorker:
     def __init__(self, ):
-        super(GroupWorker, self).__init__()
+        super(ChatWorker, self).__init__()
         self.cfg_helper = ConfigHelper()
         self.mongo = pymongo.MongoClient("mongodb://localhost:27017/").myclient[service.service_name]
         self.user_bf = service.UserBusinessFlowManager()
@@ -21,9 +21,9 @@ class GroupWorker:
 
 
 # noinspection PyShadowingBuiltins,PyBroadException,DuplicatedCode
-class GroupSelectWorker(GroupWorker):
+class ChatSelectWorker(ChatWorker):
     def __init__(self, ):
-        super(GroupSelectWorker, self).__init__()
+        super(ChatSelectWorker, self).__init__()
 
     def serve_request(self, request_body):
         request = request_body
@@ -84,9 +84,9 @@ class GroupSelectWorker(GroupWorker):
 
 
 # noinspection PyShadowingBuiltins,PyBroadException,DuplicatedCode
-class GroupInsertWorker(GroupWorker):
+class ChatInsertWorker(ChatWorker):
     def __init__(self, ):
-        super(GroupInsertWorker, self).__init__()
+        super(ChatInsertWorker, self).__init__()
 
     def serve_request(self, request_body):
         request = request_body
@@ -156,9 +156,9 @@ class GroupInsertWorker(GroupWorker):
 
 
 # noinspection PyBroadException,PyShadowingBuiltins,DuplicatedCode
-class GroupDeleteWorker(GroupWorker):
+class ChatDeleteWorker(ChatWorker):
     def __init__(self, ):
-        super(GroupDeleteWorker, self).__init__()
+        super(ChatDeleteWorker, self).__init__()
 
     def serve_request(self, request_body):
         request = request_body
@@ -225,9 +225,9 @@ class GroupDeleteWorker(GroupWorker):
 
 
 # noinspection PyBroadException,PyShadowingBuiltins,DuplicatedCode
-class GroupUpdateWorker(GroupWorker):
+class ChatUpdateWorker(ChatWorker):
     def __init__(self, ):
-        super(GroupUpdateWorker, self).__init__()
+        super(ChatUpdateWorker, self).__init__()
 
     def serve_request(self, request_body):
         request = request_body

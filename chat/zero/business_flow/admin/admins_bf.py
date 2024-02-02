@@ -1,6 +1,6 @@
 from helper.business_flow_helpers import BusinessFlow
-from members.zero.utils.utils import *
-import group as service
+from chat.zero.utils.utils import *
+import chat as service
 
 
 # noinspection PyMethodMayBeStatic

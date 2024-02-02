@@ -1,12 +1,9 @@
 import datetime
-from hashlib import md5
+
+import chat
 from helper.business_flow_helpers import BusinessFlow
-from helper.config_helper import ConfigHelper
 from helper.io_helpers import *
 from group.zero.utils.utils import *
-import random
-
-from members import get_member
 import group as service
 
 
@@ -15,6 +12,7 @@ class UserBusinessFlowManager(BusinessFlow):
         super(UserBusinessFlowManager, self).__init__(service.service_name)
         self.cfg_helper = ConfigHelper()
         self.index_image_file = self.cfg_helper.get_config(service.service_name)["index_image_file"]
+        self.message_index_name = self.cfg_helper.get_config(service.service_name)["message_index_name"]
 
     def select_business_flow(self, data, request, member, params=None):
         self.mongo.get_mongo_connection()
@@ -23,68 +21,17 @@ class UserBusinessFlowManager(BusinessFlow):
             raise RequiredFieldError("method")
 
         method = request["method"]
-        if method == "select_group":
-            user_id = str(data['user_id'])
-            query = {"user_id": user_id}
+        if method == "group_info":
+            group_user_name = data.get("group_user_name", None)
+            if group_user_name in ['null', None]:
+                raise DosenotExistGroup()
+            query = {"group_user_name": group_user_name}
             search_result = list(self.mongo.find(query=query, index_name=self.index_name))
-            for item in range(len(search_result)):
-                del search_result[item]['_id']
-                add = True
-                contact_info = get_member(search_result[item]['contact_id'])
-                contact_list_contact = get_contact(search_result[item]['contact_id'])
-                for contact_contact_list in contact_list_contact:
-                    if contact_contact_list['contact_id'] == user_id:
-                        if contact_contact_list['access_photo'] in ['TRUE', True, "True", "true"]:
-                            if contact_info["image"] not in ['null', None, "None"]:
-                                find_image = list(self.serve_file(self.index_image_file, contact_info["image"]))
-                                if len(find_image) != 0:
-                                    search_result[item]["image"] = {
-                                        "file_content": find_image[0]['file_content'],
-                                        "file_type": find_image[0]['type'],
-                                    }
-                        if contact_contact_list['access_phone'] in ['TRUE', True, "True", "true"]:
-                            search_result[item]["phone"] = contact_info["phone"]
-                        add = False
-                if add:
-                    if contact_info['access_photo'] in ['TRUE', True, "True", "true"]:
-                        if contact_info["image"] not in ['null', None, "None"]:
-                            find_image = list(self.serve_file(self.index_image_file, contact_info["image"]))
-                            if len(find_image) != 0:
-                                search_result[item]["image"] = {
-                                    "file_content": find_image[0]['file_content'],
-                                    "file_type": find_image[0]['type'],
-                                }
-                    if contact_info['access_phone'] in ['TRUE', True, "True", "true"]:
-                        search_result[item]["phone"] = contact_info["phone"]
-                    search_result[item]["first_name"] = contact_info["first_name"]
-                    search_result[item]["last_name"] = contact_info["last_name"]
-                    search_result[item]["bio"] = contact_info["bio"]
-                    search_result[item]["user_name"] = contact_info["user_name"]
-
-            results = {"total": len(search_result), "result": list(search_result)}
-        elif method == "select_user_by_username":
-            user_name = str(data['user_name'])
-
-            query = {"user_name": user_name}
-            search_result = list(self.mongo.find(query=query, index_name=self.index_name, limit=1))
-            for item in range(len(search_result)):
-                del search_result[item]['pass_hash']
-                del search_result[item]['pass_salt']
-                del search_result[item]['category']
-
-            results = {"total": len(search_result), "result": list(search_result)}
-        elif method == "select_pv_info":
-            contact_id = str(data['contact_id'])
-            user_id = request['member_id']
-            query = {"group_user_name": f"pv.{user_id}.{contact_id}", "type": "pv"}
-            search_result = list(self.mongo.find(query=query, index_name=self.index_name, limit=1))
             if len(search_result) == 0:
-                query = {"group_user_name": f"pv.{contact_id}.{user_id}", "type": "pv"}
-                search_result = list(self.mongo.find(query=query, index_name=self.index_name, limit=1))
-                if len(search_result) == 0:
-                    raise PermissionError()
-
+                raise DosenotExistGroup()
+            search_result[0]['_id'] = str(search_result[0]['_id'])
             results = {"total": len(search_result), "result": list(search_result)}
+
         else:
             raise PermissionError()
 
@@ -92,7 +39,6 @@ class UserBusinessFlowManager(BusinessFlow):
 
     def insert_business_flow(self, data, request, member, params=None):
         self.mongo.get_mongo_connection()
-        # data = data['data']
         method = request["method"]
         if method == "create_group":
             if 'type' not in list(data.keys()):
@@ -125,7 +71,79 @@ class UserBusinessFlowManager(BusinessFlow):
             doc = preprocess(doc, service.group_schema)
             insert_response = self.mongo.insert(index_name=self.index_name, document=doc, insert_type='insert_one')
             result = {"id": str(insert_response.inserted_id), "result": "inserted"}
-        elif method == "add_new_member":
+        elif request["method"] == "add_new_message":
+            if 'group_user_name' not in list(data.keys()):
+                raise RequiredFieldError("group_user_name")
+            query = {"group_user_name": data['group_user_name']}
+            search_result = list(self.mongo.find(query=query, index_name=self.index_name))
+            if len(search_result) == 0:
+                raise DosenotExistGroup()
+            data['sender'] = request['member_id']
+            data['receiver'] = []
+            data["DC_CREATE_TIME"] = datetime.datetime.now().strftime("%Y/%m/%d %H:%M:%S.%f")
+            data["last_update_date"] = datetime.datetime.now().strftime("%Y/%m/%d %H:%M:%S.%f")
+            for item in search_result[0]['user_ids']:
+                data['receiver'].append(item)
+            for item in search_result[0]['admin_ids']:
+                if item not in search_result[0]['user_ids']:
+                    data['receiver'].append(item)
+            data['chat_id'] = data['group_user_name']
+            doc = check_full_schema(data, chat.message_schema)
+            doc = preprocess(doc, chat.message_schema)
+            insert_response = self.mongo.insert(index_name=self.message_index_name, document=doc,
+                                                insert_type='insert_one')
+            result = {"id": str(insert_response.inserted_id), "result": "inserted"}
+
+
+        else:
+            raise PermissionError()
+
+        return result
+
+    def delete_business_flow(self, data, request, member, params=None):
+        self.mongo.get_mongo_connection()
+        if request["method"] == "delete_group":
+
+            query = {"group_user_name": data['group_user_name']}
+            search_result = list(self.mongo.find(query=query, index_name=self.index_name, limit=1))
+            if len(search_result) == 0:
+                raise DosenotExistGroup()
+            admin_ids_list = search_result[0]['admin_ids']
+            if request['member_id'] not in admin_ids_list:
+                raise PermissionError()
+            update_result = self.mongo.delete(index_name=self.index_name, id=search_result[0]['_id'],
+                                              delete_type="delete_one")
+            result = {"id": str(search_result[0]['_id']), "result": update_result.raw_result}
+
+            return result
+        elif request["method"] == "delete_user":
+
+            query = {"group_user_name": data['group_user_name']}
+            search_result = list(self.mongo.find(query=query, index_name=self.index_name, limit=1))
+            if len(search_result) == 0:
+                raise DosenotExistGroup()
+            admin_ids_list = search_result[0]['admin_ids']
+            if request['member_id'] not in admin_ids_list:
+                raise PermissionError()
+            if data['user_id'] in search_result[0]["user_ids"]:
+                user_list = search_result[0]['user_ids']
+                user_list.remove(data['user_id'])
+
+                doc = {"user_ids": user_list}
+                check_schema(doc, service.group_schema)
+                doc = preprocess(doc, schema=service.group_schema)
+
+                newvalues = {**doc}
+
+                update_result = self.mongo.update(index_name=self.index_name, id=search_result[0]['_id'],
+                                                  document=newvalues,
+                                                  update_type='update_one')
+                result = {"id": str(search_result[0]['_id']), "result": update_result.raw_result}
+            return result
+
+    def update_business_flow(self, data, request, member, params=None):
+        self.mongo.get_mongo_connection()
+        if request["method"] == "add_new_member":
             if 'group_user_name' not in list(data.keys()):
                 raise RequiredFieldError("group_user_name")
             query = {"group_user_name": data['group_user_name']}
@@ -135,70 +153,25 @@ class UserBusinessFlowManager(BusinessFlow):
             if search_result[0]['type'] == "pv":
                 raise PermissionError()
             user_ids_list = search_result[0]['user_ids']
-            for member in data['member_ids']:
-                user_ids_list.append(member)
-            doc = check_full_schema({"user_ids": user_ids_list}, service.contact_schema)
-            doc = preprocess(doc, service.group_schema)
-            insert_response = self.mongo.insert(index_name=self.index_name, document=doc, insert_type='insert_one')
-            result = {"id": str(insert_response.inserted_id), "result": "inserted"}
-
-        else:
-            raise PermissionError()
-
-        return result
-
-    def delete_business_flow(self, data, request, member, params=None):
-        self.mongo.get_mongo_connection()
-        if request["method"] == "delete_content":
-
-            query = {"contact_id": data['contact_id']}
-            search_result = list(
-                self.mongo.find(query=query, index_name=self.index_name, limit=1, projection={"user_id"}))
-            if len(search_result) == 0:
-                raise MemberNotFoundError()
-            if search_result[0]['user_id'] != member['_id']:
+            admin_ids_list = search_result[0]['admin_ids']
+            if request['member_id'] not in admin_ids_list:
                 raise PermissionError()
-            update_result = self.mongo.delete(index_name=self.index_name, id=search_result[0]['_id'],
-                                              delete_type="delete_one")
-            result = {"id": str(search_result[0]['_id']), "result": update_result.raw_result}
+            for member in data['member_ids']:
+                if member not in user_ids_list:
+                    user_ids_list.append(member)
 
-            return result
+            doc = {"user_ids": user_ids_list}
+            check_schema(doc, service.group_schema)
+            doc = preprocess(doc, schema=service.group_schema)
 
-    def update_business_flow(self, data, request, member, params=None):
-        self.mongo.get_mongo_connection()
-        if request["method"] == "update_content_detail":
-            data["last_update_date"] = datetime.datetime.now().strftime("%Y/%m/%d %H:%M:%S.%f")
-            blocked_fields = ["user_id", "contact_id"]
-            content_id = data["contact_id"]
-            del data["contact_id"]
-
-            if "access_status" in list(data.keys()):
-                if data['access_status']:
-                    data['status'] = 'online'
-                    del data['access_status']
-            data_keys = list(data.keys())
-            for k in data_keys:
-                if k in blocked_fields:
-                    del data[k]
-            query = {"contact_id": content_id, "user_id": request['member_id']}
-            search_result = list(
-                self.mongo.find(query=query, index_name=self.index_name, limit=1, projection={"user_id"}))
-            if len(search_result) == 0:
-                raise MemberNotFoundError()
-            data["last_update_date"] = datetime.datetime.now().strftime("%Y/%m/%d %H:%M:%S.%f")
-
-            check_schema(data, service.contact_schema)
-            data = preprocess(data, schema=service.contact_schema)
-
-            newvalues = {**data}
+            newvalues = {**doc}
 
             update_result = self.mongo.update(index_name=self.index_name, id=search_result[0]['_id'],
                                               document=newvalues,
                                               update_type='update_one')
-
             result = {"id": str(search_result[0]['_id']), "result": update_result.raw_result}
-
             return result
+
         raise PermissionError()
 
     # return result
